@@ -178,3 +178,73 @@ Now access via `http://YOUR-PUBLIC-IP` (no port needed!)
 | **Public IP** | The address to access your app from the internet |
 | **Nginx** | Reverse proxy to forward port 80 → 3000 |
 | **PM2** | Process manager to keep Node.js running |
+
+
+
+
+## Steps to resolve login issue in github 
+
+1. Download publish profile from azure (web app overview)
+2. Copy the key from it.
+3. Go to settings of repo in github at bottom find secret and variables
+4. Create new repository secret paste the key there and save it.
+sample yml file that works:
+
+        # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+        # More GitHub Actions for Azure: https://github.com/Azure/actions
+        
+        name: Build and deploy Node.js app to Azure Web App - deploy-parth
+        
+        on:
+          push:
+            branches:
+              - main
+          workflow_dispatch:
+        
+        jobs:
+          build:
+            runs-on: ubuntu-latest
+            permissions:
+              contents: read #This is required for actions/checkout
+        
+            steps:
+              - uses: actions/checkout@v4
+        
+              - name: Set up Node.js version
+                uses: actions/setup-node@v3
+                with:
+                  node-version: '22.x'
+        
+              - name: npm install, build, and test
+                run: |
+                  npm install
+                  npm run build --if-present
+                  npm run test --if-present
+        
+              - name: Upload artifact for deployment job
+                uses: actions/upload-artifact@v4
+                with:
+                  name: node-app
+                  path: .
+        
+          deploy:
+            runs-on: ubuntu-latest
+            needs: build
+            permissions:
+              id-token: write #This is required for requesting the JWT
+              contents: read #This is required for actions/checkout
+        
+            steps:
+              - name: Download artifact from build job
+                uses: actions/download-artifact@v4
+                with:
+                  name: node-app
+              
+              - name: Deploy to Azure Web App
+                uses: azure/webapps-deploy@v3
+                with:
+                  app-name: 'deploy-parth'  // change the name
+                  publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+                  package: .               // make sure only one . is there
+
+
